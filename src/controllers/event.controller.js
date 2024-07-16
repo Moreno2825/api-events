@@ -68,6 +68,7 @@ export const getAllEvents = async (req, res) => {
       date: event.date,
       cost: event.cost,
       image: event.image,
+      location: event.location,
     }));
 
     const response = {
@@ -102,6 +103,7 @@ export const getEventById = async (req, res) => {
       date: event.date,
       cost: event.cost,
       image: event.image,
+      location: event.location,
     };
     return res.status(200).json({ response });
   } catch (error) {
