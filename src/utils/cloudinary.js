@@ -10,14 +10,14 @@ cloudinary.config({
 
 export async function uploadImage(filePath) {
     return await cloudinary.uploader.upload(filePath, {
-        folder: "blog",
+        folder: "event",
     });
 }
 
 export async function deleteImage(public_id){
     return await cloudinary.uploader.destroy(
         public_id,{
-            folder: "blog"
+            folder: "event"
         }
     )
 }

@@ -55,28 +55,35 @@ export const getById = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   try {
-    const data = await req.body;
+    const data = req.body;
+    console.log(data);
 
     const { id } = req.params;
+    console.log(id);
 
-    if (!data.name || (!data.email && !data.password)) {
+    if (!data.name && !data.lastname) {
       return res.status(400).json({
         message:
-          "Al menos un campo (name, email, password) debe estar presente para actualizar",
+          "Al menos un campo (name, lastname) debe estar presente para actualizar",
       });
     }
 
-    if (!updateUser) return handleNotFound(res, User);
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
 
     const updateUser = await User.findByIdAndUpdate(id, data, {
       new: true,
     });
 
-    return res.status(201).json({ user: updateUser });
+    return res.status(200).json({ user: updateUser });
   } catch (error) {
-    return res.status(500).json({ message: "Error al obtener los usuarios" });
+    console.log(error);
+    return res.status(500).json({ message: "Error al actualizar el usuario" });
   }
 };
+
 
 export const deleteUser = async (req, res) => {
   try {
