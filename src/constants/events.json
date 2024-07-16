@@ -1,0 +1,13 @@
+{
+  "Events": [
+    {
+      "id_User": "666a83f1df397f94010196e0",
+      "title": "title",
+      "content": "content",
+      "image": "image",
+      "date": "date",
+      "cost": 0.0,
+      "place": "place"
+    }
+  ]
+}
