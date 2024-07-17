@@ -10,7 +10,7 @@ import fs from "fs-extra";
  */
 export const postEvent = async (req, res) => {
   try {
-    const { id_user, title, description, date, cost, location } = req.body;
+    const { id_user, title, description, date, cost, location, b_concluido } = req.body;
 
     if (!id_user || !title || !description || !date || !cost || !location)
       return res.status(400).json({ message: "the field is empty" });
@@ -26,6 +26,7 @@ export const postEvent = async (req, res) => {
       date,
       cost,
       location,
+      b_concluido,
     });
 
     if (req.files?.image) {
@@ -55,33 +56,49 @@ export const getAllEvents = async (req, res) => {
   try {
     const events = await Event.find().populate("id_user");
 
-    if(!events) return handleNotFound(res, Event);
+    if (!events) return handleNotFound(res, Event);
 
-    const filterEvents = events.map((event) => ({
-      _id: event._id,
-      user: {
-        _id: event.id_user._id,
-        name: event.id_user.name,
-      },
-      title: event.title,
-      description: event.description,
-      date: event.date,
-      cost: event.cost,
-      image: event.image,
-      location: event.location,
+    const today = new Date().toISOString().split("T")[0]; // Obtiene la fecha actual en formato 'YYYY-MM-DD'
+
+    const filterEvents = await Promise.all(events.map(async (event) => {
+      const eventDate = event.date.toISOString().split("T")[0]; // Obtiene la fecha del evento en formato 'YYYY-MM-DD'
+
+      if (eventDate < today && !event.b_concluido) {
+        event.b_concluido = true;
+        await event.save();
+      }
+
+      return {
+        _id: event._id,
+        user: {
+          _id: event.id_user._id,
+          name: event.id_user.name,
+        },
+        title: event.title,
+        description: event.description,
+        date: event.date,
+        cost: event.cost,
+        image: event.image,
+        location: event.location,
+        b_activo: event.b_activo,
+        b_concluido: event.b_concluido,
+        b_cancelado: event.b_cancelado,
+      };
     }));
 
-    const response = {
-      events: filterEvents,
-      total: filterEvents.length,
-    };
+    const activeEvents = filterEvents.filter(event => event.b_activo && !event.b_cancelado);
 
+    const response = {
+      events: activeEvents,
+      total: activeEvents.length,
+    };
 
     return res.status(200).json({ response });
   } catch (error) {
     return res.status(500).json({ message: "Error", Error: error });
   }
 };
+
 
 /**
  * @function Consultar Evento por ID
@@ -90,7 +107,10 @@ export const getAllEvents = async (req, res) => {
 export const getEventById = async (req, res) => {
   try {
     const { id } = req.params;
+    
     const event = await Event.findById(id).populate("id_user");
+
+    if (!event) return handleNotFound(res, Event);
 
     const response = {
       _id: event._id,
@@ -104,6 +124,8 @@ export const getEventById = async (req, res) => {
       cost: event.cost,
       image: event.image,
       location: event.location,
+      b_activo: event.b_activo,
+      b_concluido: event.b_concluido,
     };
     return res.status(200).json({ response });
   } catch (error) {
@@ -118,7 +140,7 @@ export const getEventById = async (req, res) => {
 export const updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id_user, title, description, date, cost, location } = req.body;
+    const { id_user, title, description, date, cost, location, b_activo } = req.body;
     const updateFields = {};
 
     if(title) updateFields.title = title;
@@ -126,6 +148,7 @@ export const updateEvent = async (req, res) => {
     if(date) updateFields.date = date;
     if(cost) updateFields.cost = cost;
     if(location) updateFields.location = location;
+    if(b_activo) updateFields.b_activo = b_activo;
 
     const existingEvent = await Event.findById(id);
     if(!existingEvent) return handleNotFound(res, Event);
@@ -154,7 +177,7 @@ export const updateEvent = async (req, res) => {
 };
 
 /**
- * @function Eliminar Evento
+ * @function Cancelar Evento
  * app.post('/api/events/delete');
  */
 export const deleteEvent = async (req, res) => {
@@ -169,12 +192,8 @@ export const deleteEvent = async (req, res) => {
       return res.status(401).json({ message: "No autorizado" });
     }
 
-    const deleteEvent = await Event.findByIdAndDelete(id);
-    if(!deleteEvent) return handleNotFound(res, Event);
-
-    if(deleteEvent.image && deleteEvent.image.publicId){
-      await deleteImage(deleteEvent.image.publicId);
-    }
+    existingEvent.b_cancelado = true;
+    await existingEvent.save();
 
     return res.status(200).json({ message: "Delete successfully" });
   } catch (error) {

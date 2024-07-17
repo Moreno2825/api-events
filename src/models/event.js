@@ -34,6 +34,18 @@ export const eventSchema = new Schema(
     location: {
       type: String,
     },
+    b_activo: {
+      type: Boolean,
+      default: true,
+    },
+    b_cancelado: {
+      type: Boolean,
+      default: false,
+    },
+    b_concluido: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     versionKey: false,
