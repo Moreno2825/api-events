@@ -86,11 +86,11 @@ export const getAllEvents = async (req, res) => {
       };
     }));
 
-    const activeEvents = filterEvents.filter(event => event.b_activo && !event.b_cancelado);
+    const activeEvents = filterEvents.filter(event => event.b_activo);
 
     const response = {
-      events: activeEvents,
-      total: activeEvents.length,
+      events: filterEvents,
+      total: filterEvents.length,
     };
 
     return res.status(200).json({ response });
