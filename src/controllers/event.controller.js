@@ -126,6 +126,7 @@ export const getEventById = async (req, res) => {
       location: event.location,
       b_activo: event.b_activo,
       b_concluido: event.b_concluido,
+      b_cancelado: event.b_cancelado,
     };
     return res.status(200).json({ response });
   } catch (error) {
